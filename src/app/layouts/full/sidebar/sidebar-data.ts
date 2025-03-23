@@ -11,42 +11,42 @@ export const navItems: NavItem[] = [
   },
 
   {
-    navCap: 'Componentes UI',
+    navCap: 'Herramientas de Trabajo',
+  },
+  {
+    displayName: 'Paciente',
+    iconName: 'clipboard-text',
+    route: '/herramientas-de-trabajo/paciente',
   },
   {
     displayName: 'Insignias',
     iconName: 'archive',
-    route: '/ui-components/badge',
+    route: '/herramientas-de-trabajo/badge',
   },
   {
     displayName: 'Chips',
     iconName: 'info-circle',
-    route: '/ui-components/chips',
+    route: '/herramientas-de-trabajo/chips',
   },
   {
     displayName: 'Listas',
     iconName: 'list-details',
-    route: '/ui-components/lists',
+    route: '/herramientas-de-trabajo/lists',
   },
   {
     displayName: 'Menú',
     iconName: 'file-text',
-    route: '/ui-components/menu',
+    route: '/herramientas-de-trabajo/menu',
   },
   {
     displayName: 'Tooltips',
     iconName: 'file-text-ai',
-    route: '/ui-components/tooltips',
-  },
-  {
-    displayName: 'Formularios',
-    iconName: 'clipboard-text',
-    route: '/ui-components/forms',
+    route: '/herramientas-de-trabajo/tooltips',
   },
   {
     displayName: 'Tablas',
     iconName: 'table',
-    route: '/ui-components/tables',
+    route: '/herramientas-de-trabajo/tables',
   },
 
   {
