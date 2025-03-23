@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CoreService } from 'src/app/services/core.service';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,15 +6,25 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { MaterialModule } from 'src/app/material.module';
 import { AuthService } from '../service/auth.service';
+import { SessionManagerService } from 'src/app/services/session-manager.service';
 
 @Component({
   selector: 'app-side-register',
   imports: [RouterModule, MaterialModule, FormsModule, ReactiveFormsModule],
   templateUrl: './side-register.component.html',
 })
-export class AppSideRegisterComponent {
+export class AppSideRegisterComponent implements OnInit {
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService, 
+    private router: Router,
+    private sessionManager: SessionManagerService
+  ) {}
+
+  ngOnInit(): void {
+    // Limpiar el token al entrar a la página de registro
+    this.sessionManager.clearToken();
+  }
 
   form = new FormGroup({
     name: new FormControl('', [Validators.required, Validators.minLength(6)]),
