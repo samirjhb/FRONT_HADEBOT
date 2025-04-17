@@ -25,9 +25,19 @@ async registerService(data: any) {
    }
    
    return response;
-  } catch (error) {
-    console.log(error);
-    return error;
+  } catch (error: any) {
+    console.error('Registration error:', error);
+    
+    // Extract error message from the response
+    let errorMessage = 'Error en el registro';
+    if (error.error && error.error.message) {
+      errorMessage = error.error.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    // Throw the error with the message so it can be caught by the component
+    throw { message: errorMessage, originalError: error };
   }
 }
 
@@ -42,9 +52,19 @@ async loginService(data: any) {
     }
     
     return response;
-  } catch (error) {
-    console.log(error);
-    return error;
+  } catch (error: any) {
+    console.error('Login error:', error);
+    
+    // Extract error message from the response
+    let errorMessage = 'Error en el inicio de sesión';
+    if (error.error && error.error.message) {
+      errorMessage = error.error.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    // Throw the error with the message so it can be caught by the component
+    throw { message: errorMessage, originalError: error };
   }
 }
 

@@ -20,11 +20,14 @@ import { MatTableModule } from '@angular/material/table';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../dialogs/confirm-dialog/confirm-dialog.component';
+import { DirectivesModule } from 'src/app/directives/directives.module';
 import { MatTableDataSource } from '@angular/material/table';
 
 // Interfaz para los datos de la tabla de pacientes
 export interface PacienteData {
-  id: number;
+  _id: string;
   name: string;
   rut: string;
   email: string;
@@ -37,7 +40,7 @@ export interface PacienteData {
 // Datos de ejemplo para la tabla
 const PACIENTES_EJEMPLO: PacienteData[] = [
   {
-    id: 1,
+    _id: '1',
     name: 'Juan Pérez González',
     rut: '12.345.678-9',
     email: 'juan.perez@ejemplo.com',
@@ -47,7 +50,7 @@ const PACIENTES_EJEMPLO: PacienteData[] = [
     status: 'activo'
   },
   {
-    id: 2,
+    _id: '2',
     name: 'María Rodríguez López',
     rut: '14.567.890-1',
     email: 'maria.rodriguez@ejemplo.com',
@@ -57,7 +60,7 @@ const PACIENTES_EJEMPLO: PacienteData[] = [
     status: 'activo'
   },
   {
-    id: 3,
+    _id: '3',
     name: 'Pedro Sánchez Martínez',
     rut: '16.789.012-3',
     email: 'pedro.sanchez@ejemplo.com',
@@ -67,7 +70,7 @@ const PACIENTES_EJEMPLO: PacienteData[] = [
     status: 'inactivo'
   },
   {
-    id: 4,
+    _id: '4',
     name: 'Ana Gómez Fernández',
     rut: '18.901.234-5',
     email: 'ana.gomez@ejemplo.com',
@@ -77,7 +80,7 @@ const PACIENTES_EJEMPLO: PacienteData[] = [
     status: 'bloqueado'
   },
   {
-    id: 5,
+    _id: '5',
     name: 'Carlos Jiménez Ruiz',
     rut: '11.234.567-8',
     email: 'carlos.jimenez@ejemplo.com',
@@ -87,7 +90,7 @@ const PACIENTES_EJEMPLO: PacienteData[] = [
     status: 'activo'
   },
   {
-    id: 6,
+    _id: '6',
     name: 'Laura Martín García',
     rut: '13.456.789-0',
     email: 'laura.martin@ejemplo.com',
@@ -97,7 +100,7 @@ const PACIENTES_EJEMPLO: PacienteData[] = [
     status: 'activo'
   },
   {
-    id: 7,
+    _id: '7',
     name: 'Roberto Díaz Pérez',
     rut: '15.678.901-2',
     email: 'roberto.diaz@ejemplo.com',
@@ -107,7 +110,7 @@ const PACIENTES_EJEMPLO: PacienteData[] = [
     status: 'inactivo'
   },
   {
-    id: 8,
+    _id: '8',
     name: 'Carmen López Sánchez',
     rut: '17.890.123-4',
     email: 'carmen.lopez@ejemplo.com',
@@ -140,21 +143,25 @@ const PACIENTES_EJEMPLO: PacienteData[] = [
     NgIf,
     MatIconModule,
     TablerIconsModule,
+    DirectivesModule,
     MatSnackBarModule,
     MatTableModule,
     MatMenuModule,
     MatProgressBarModule,
     MatPaginatorModule
-  ],
+],
 })
 
 export class PacienteComponent implements OnInit {
   pacienteForm: FormGroup;
-  maxDate: Date = new Date(); 
-  isSubmitting: boolean = false; 
+  maxDate: Date = new Date();
+  isSubmitting: boolean = false;
   successMessage: string = '';
   errorMessage: string = '';
-  
+  isEditMode: boolean = false;
+  currentPacienteId: string | null = null;
+  formTitle: string = 'Registro de Paciente';
+
   // Datos para la tabla de pacientes
   displayedColumns: string[] = ['name', 'rut', 'contact', 'status', 'actions'];
   dataSource!: MatTableDataSource<PacienteData>;
@@ -165,18 +172,19 @@ export class PacienteComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   constructor(
-    private fb: FormBuilder, 
+    private fb: FormBuilder,
     private pacienteService: PacienteService,
     private snackBar: MatSnackBar,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog
   ) {
     this.pacienteForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
-      rut: ['', [Validators.required, Validators.pattern(/^\d{1,2}\.\d{3}\.\d{3}-[\dkK]$/)]],
+      rut: ['', [Validators.required]],  // El patrón se validará en la directiva
       cel: ['', [Validators.required, Validators.pattern(/^569\d{8}$/)]],
       email: ['', [Validators.required, Validators.email]],
-      record: ['', Validators.required],
-      birthDate: ['', Validators.required]
+      record: [''],
+      birthDate: ['', [Validators.required]]
     });
   }
 
@@ -188,7 +196,7 @@ export class PacienteComponent implements OnInit {
   // Método para cargar la lista de pacientes
   loadPacientes() {
     this.isLoading = true;
-    
+
     // Simulamos una carga de datos
     setTimeout(() => {
       try {
@@ -199,7 +207,7 @@ export class PacienteComponent implements OnInit {
             this.initializeDataSource();
             this.isLoading = false;
           })
-          .catch((error: any) => {            
+          .catch((error: any) => {
             // Si hay un error, usamos los datos de ejemplo
             console.error('Error al cargar pacientes desde la API:', error);
             this.pacientes = PACIENTES_EJEMPLO;
@@ -219,12 +227,12 @@ export class PacienteComponent implements OnInit {
   // Inicializar el dataSource con los datos y configurar el paginador
   initializeDataSource() {
     this.dataSource = new MatTableDataSource<PacienteData>(this.pacientes);
-    
+
     // Configurar opciones de paginación después de que Angular termine de renderizar la vista
     setTimeout(() => {
       if (this.paginator) {
         this.dataSource.paginator = this.paginator;
-        
+
         // Traducir textos del paginador
         this.paginator._intl.itemsPerPageLabel = 'Pacientes por página:';
         this.paginator._intl.nextPageLabel = 'Página siguiente';
@@ -243,37 +251,99 @@ export class PacienteComponent implements OnInit {
   }
 
   async onSubmit() {
-    if (this.pacienteForm.valid && !this.isSubmitting) {
+    if (this.pacienteForm.valid) {
       this.isSubmitting = true;
-      this.successMessage = '';
-      this.errorMessage = '';
-      
+      console.log('Estado de edición:', { isEditMode: this.isEditMode, currentPacienteId: this.currentPacienteId });
+
       try {
-        console.log('Formulario enviado:', this.pacienteForm.value);
-        const response = await this.pacienteService.createPaciente(this.pacienteForm.value);
-        console.log('Paciente creado exitosamente:', response);
-        
-        // Mostrar mensaje de éxito
-        this.snackBar.open('Paciente registrado exitosamente', 'Cerrar', {
-          duration: 5000,
-          panelClass: ['success-snackbar']
-        });
-        
-        // Resetear formulario
-        this.pacienteForm.reset();
-        
-        // Recargar la lista de pacientes
-        this.loadPacientes();
-        
-        // Opcional: redirigir a otra página después de un registro exitoso
-        // this.router.navigate(['/dashboard/pacientes']);
+        if (this.isEditMode && this.currentPacienteId) {
+          console.log('Ejecutando modo de EDICIÓN para paciente ID:', this.currentPacienteId);
+          // Modo edición - actualizar paciente existente
+          console.log('Datos a enviar para actualización:', this.pacienteForm.value);
+          await this.pacienteService.updatePaciente(this.currentPacienteId, this.pacienteForm.value)
+            .then(response => {
+              console.log('Paciente actualizado:', response);
+
+              // Mostrar mensaje de éxito
+              this.snackBar.open(
+                'Paciente actualizado exitosamente',
+                'Cerrar',
+                {
+                  duration: 5000,
+                  panelClass: ['success-snackbar']
+                }
+              );
+
+              // Limpiar el formulario y resetear el modo
+              this.resetForm();
+
+              // Recargar la lista de pacientes
+              this.loadPacientes();
+
+              // Desplazarse a la tabla
+              document.querySelector('table')?.scrollIntoView({ behavior: 'smooth' });
+            })
+            .catch(error => {
+              console.error('Error al actualizar el paciente:', error);
+
+              // Mostrar mensaje de error
+              this.snackBar.open(
+                error.error?.message || 'Error al actualizar el paciente. Intente nuevamente.',
+                'Cerrar',
+                {
+                  duration: 5000,
+                  panelClass: ['error-snackbar']
+                }
+              );
+            });
+        } else {
+          // Modo creación - crear nuevo paciente
+          console.log('Ejecutando modo de CREACIÓN de paciente');
+          console.log('Datos a enviar para creación:', this.pacienteForm.value);
+          await this.pacienteService.createPaciente(this.pacienteForm.value)
+            .then(response => {
+              console.log('Paciente creado:', response);
+
+              // Mostrar mensaje de éxito
+              this.snackBar.open(
+                'Paciente registrado exitosamente',
+                'Cerrar',
+                {
+                  duration: 5000,
+                  panelClass: ['success-snackbar']
+                }
+              );
+
+              // Limpiar el formulario
+              this.resetForm();
+
+              // Recargar la lista de pacientes
+              this.loadPacientes();
+
+              // Desplazarse a la tabla
+              document.querySelector('table')?.scrollIntoView({ behavior: 'smooth' });
+            })
+            .catch(error => {
+              console.error('Error al crear el paciente:', error);
+
+              // Mostrar mensaje de error
+              this.snackBar.open(
+                error.error?.message || 'Error al registrar el paciente. Intente nuevamente.',
+                'Cerrar',
+                {
+                  duration: 5000,
+                  panelClass: ['error-snackbar']
+                }
+              );
+            });
+        }
       } catch (error: any) {
-        console.error('Error al crear el paciente:', error);
-        
+        console.error('Error en la operación del paciente:', error);
+
         // Mostrar mensaje de error
         this.snackBar.open(
-          error.error?.message || 'Error al registrar el paciente. Intente nuevamente.', 
-          'Cerrar', 
+          error.error?.message || 'Error al procesar el paciente. Intente nuevamente.',
+          'Cerrar',
           {
             duration: 5000,
             panelClass: ['error-snackbar']
@@ -307,12 +377,13 @@ export class PacienteComponent implements OnInit {
     }
     
     if (control?.hasError('pattern')) {
-      if (controlName === 'rut') {
-        return 'Formato de RUT inválido. Ej: 12.345.678-9';
-      }
       if (controlName === 'cel') {
         return 'Formato de celular inválido. Debe comenzar con 569 seguido de 8 dígitos';
       }
+    }
+    
+    if (control?.hasError('invalidRut')) {
+      return 'Formato de RUT inválido. Ej: 12.345.678-9';
     }
     
     return '';
@@ -320,77 +391,146 @@ export class PacienteComponent implements OnInit {
   
   // Método para cancelar y volver atrás
   cancelar() {
-    this.router.navigate(['/dashboard']);
+    if (this.isEditMode) {
+      // Si estamos en modo edición, solo resetear el formulario y volver al modo de creación
+      this.resetForm();
+    } else {
+      // Si estamos en modo creación, volver al dashboard
+      this.router.navigate(['/dashboard']);
+    }
+  }
+  
+  // Método para resetear el formulario y el modo de edición
+  resetForm() {
+    console.log('Reseteando formulario y modo de edición');
+    this.pacienteForm.reset();
+    this.isEditMode = false;
+    this.currentPacienteId = null;
+    this.formTitle = 'Registro de Paciente';
+    console.log('Estado después de resetear:', { isEditMode: this.isEditMode, currentPacienteId: this.currentPacienteId });
   }
 
   // Método para editar un paciente
-  editarPaciente(paciente: PacienteData) {
-    // Aquí puedes implementar la lógica para editar un paciente
-    console.log('Editar paciente:', paciente);
-    // Puedes cargar los datos del paciente en el formulario
-    this.pacienteForm.patchValue({
-      name: paciente.name,
-      rut: paciente.rut,
-      cel: paciente.cel,
-      email: paciente.email,
-      record: paciente.record,
-      birthDate: paciente.birthDate
-    });
-    
-    // Desplazarse al formulario
-    document.querySelector('form')?.scrollIntoView({ behavior: 'smooth' });
-    
-    // Mostrar mensaje
-    this.snackBar.open('Editando paciente: ' + paciente.name, 'Cerrar', {
-      duration: 3000
-    });
+  async editarPaciente(paciente: PacienteData) {
+    try {
+      console.log('Editar paciente:', paciente);
+      this.isEditMode = true;
+      this.currentPacienteId = paciente._id;
+      this.formTitle = 'Editar Paciente';
+      
+      // Intentar obtener los datos más recientes del paciente desde el backend
+      try {
+        const pacienteActualizado = await this.pacienteService.getPacienteById(paciente._id);
+        console.log('Datos actualizados del paciente:', pacienteActualizado);
+        
+        // Si se obtienen los datos del backend, usarlos para llenar el formulario
+        if (pacienteActualizado) {
+          this.pacienteForm.patchValue({
+            name: pacienteActualizado.name,
+            rut: pacienteActualizado.rut,
+            cel: pacienteActualizado.cel,
+            email: pacienteActualizado.email,
+            record: pacienteActualizado.record,
+            birthDate: new Date(pacienteActualizado.birthDate)
+          });
+        }
+      } catch (error) {
+        console.error('Error al obtener datos del paciente desde el backend:', error);
+        
+        // Si hay error al obtener los datos del backend, usar los datos locales
+        this.pacienteForm.patchValue({
+          name: paciente.name,
+          rut: paciente.rut,
+          cel: paciente.cel,
+          email: paciente.email,
+          record: paciente.record,
+          birthDate: paciente.birthDate
+        });
+      }
+      
+      // Desplazarse al formulario
+      document.querySelector('form')?.scrollIntoView({ behavior: 'smooth' });
+      
+      // Mostrar mensaje
+      this.snackBar.open('Editando paciente: ' + paciente.name, 'Cerrar', {
+        duration: 3000
+      });
+    } catch (error) {
+      console.error('Error al preparar la edición del paciente:', error);
+      this.snackBar.open('Error al preparar la edición del paciente', 'Cerrar', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+    }
   }
 
   // Método para eliminar un paciente
-  eliminarPaciente(id: number) {
-    if (confirm('¿Está seguro que desea eliminar este paciente?')) {
-      try {
-        this.pacienteService.deletePaciente(id)
-          .then(() => {
-            this.snackBar.open('Paciente eliminado exitosamente', 'Cerrar', {
-              duration: 5000,
-              panelClass: ['success-snackbar']
-            });
-            this.loadPacientes();
-          })
-          .catch((error: any) => {
-            console.error('Error al eliminar paciente:', error);
-            
-            // Si hay error en la API, simulamos la eliminación en el frontend
-            this.pacientes = this.pacientes.filter(p => p.id !== id);
-            this.initializeDataSource();
-            
-            this.snackBar.open(
-              'Paciente eliminado (simulado)', 
-              'Cerrar', 
-              {
+  eliminarPaciente(id: string) {
+    // Buscar el paciente para mostrar su nombre en el diálogo
+    const paciente = this.pacientes.find(p => p._id === id);
+    const nombrePaciente = paciente ? paciente.name : 'este paciente';
+    
+    // Abrir diálogo de confirmación personalizado
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      disableClose: true,
+      data: {
+        title: 'Confirmar eliminación',
+        message: `¿Está seguro que desea eliminar a ${nombrePaciente}?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        icon: 'trash',
+        iconColor: 'text-danger'
+      }
+    });
+
+    // Manejar la respuesta del diálogo
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // Si el usuario confirmó la eliminación
+        try {
+          this.pacienteService.deletePaciente(id)
+            .then(() => {
+              this.snackBar.open('Paciente eliminado exitosamente', 'Cerrar', {
                 duration: 5000,
                 panelClass: ['success-snackbar']
-              }
-            );
-          });
-      } catch (error) {
-        console.error('Error al intentar eliminar paciente:', error);
-        
-        // Simulamos la eliminación en el frontend
-        this.pacientes = this.pacientes.filter(p => p.id !== id);
-        this.initializeDataSource();
-        
-        this.snackBar.open(
-          'Paciente eliminado (simulado)', 
-          'Cerrar', 
-          {
-            duration: 5000,
-            panelClass: ['success-snackbar']
-          }
-        );
+              });
+              this.loadPacientes();
+            })
+            .catch((error: any) => {
+              console.error('Error al eliminar paciente:', error);
+              
+              // Si hay error en la API, simulamos la eliminación en el frontend
+              this.pacientes = this.pacientes.filter(p => p._id !== id);
+              this.initializeDataSource();
+              
+              this.snackBar.open(
+                'Paciente eliminado (simulado)', 
+                'Cerrar', 
+                {
+                  duration: 5000,
+                  panelClass: ['success-snackbar']
+                }
+              );
+            });
+        } catch (error) {
+          console.error('Error al intentar eliminar paciente:', error);
+          
+          // Simulamos la eliminación en el frontend
+          this.pacientes = this.pacientes.filter(p => p._id !== id);
+          this.initializeDataSource();
+          
+          this.snackBar.open(
+            'Paciente eliminado (simulado)', 
+            'Cerrar', 
+            {
+              duration: 5000,
+              panelClass: ['success-snackbar']
+            }
+          );
+        }
       }
-    }
+    });
   }
 
   // Método para formatear la fecha

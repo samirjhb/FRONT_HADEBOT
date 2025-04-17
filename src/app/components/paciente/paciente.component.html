@@ -85,7 +85,7 @@
                     <i-tabler name="edit" class="icon-18 me-2"></i-tabler>
                     <span>Editar</span>
                   </button>
-                  <button mat-menu-item (click)="eliminarPaciente(element.id)">
+                  <button mat-menu-item (click)="eliminarPaciente(element._id)">
                     <i-tabler name="trash" class="icon-18 me-2"></i-tabler>
                     <span>Eliminar</span>
                   </button>
@@ -129,7 +129,7 @@
       <mat-card-content>
         <div class="d-flex align-items-center justify-content-between mb-4">
           <div>
-            <h2 class="m-0">Registro de Paciente</h2>
+            <h2 class="m-0">{{ formTitle }}</h2>
             <hr>
             <h5 class="text-muted fw-normal mb-0">Ingrese los datos del paciente</h5>
             <br>
@@ -155,7 +155,8 @@
             <div class="col-lg-6 mb-4">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>RUT</mat-label>
-                <input matInput formControlName="rut" placeholder="Ej: 12.345.678-9">
+                <input matInput formControlName="rut" placeholder="Ej: 12.345.678-9" rutFormat>
+                <mat-hint>Se aplicará formato automáticamente (12.345.678-9)</mat-hint>
                 <ng-container *ngIf="pacienteForm.get('rut')?.invalid && pacienteForm.get('rut')?.touched">
                   <mat-error>
                     {{ getErrorMessage('rut') }}
@@ -225,9 +226,12 @@
               </button>
               <button mat-flat-button color="primary" type="submit" 
                 [disabled]="pacienteForm.invalid || isSubmitting">
-                <span *ngIf="!isSubmitting">Guardar Paciente</span>
+                <span *ngIf="!isSubmitting && !isEditMode">Guardar Paciente</span>
+                <span *ngIf="!isSubmitting && isEditMode">Actualizar Paciente</span>
                 <span *ngIf="isSubmitting" class="d-flex align-items-center">
-                  <i-tabler name="loader" class="icon-18 me-2 d-flex animate-spin"></i-tabler> Guardando...
+                  <i-tabler name="loader" class="icon-18 me-2 d-flex animate-spin"></i-tabler> 
+                  <span *ngIf="!isEditMode">Guardando...</span>
+                  <span *ngIf="isEditMode">Actualizando...</span>
                 </span>
               </button>
             </div>

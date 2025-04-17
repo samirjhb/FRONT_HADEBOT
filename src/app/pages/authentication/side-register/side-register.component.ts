@@ -7,6 +7,7 @@ import { RouterModule } from '@angular/router';
 import { MaterialModule } from 'src/app/material.module';
 import { AuthService } from '../service/auth.service';
 import { SessionManagerService } from 'src/app/services/session-manager.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-side-register',
@@ -18,7 +19,8 @@ export class AppSideRegisterComponent implements OnInit {
   constructor(
     private authService: AuthService, 
     private router: Router,
-    private sessionManager: SessionManagerService
+    private sessionManager: SessionManagerService,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
@@ -45,9 +47,25 @@ export class AppSideRegisterComponent implements OnInit {
         if (response && response.token) {
           this.router.navigate(['/dashboard']);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Registration failed:', error);
+        
+        // Display beautiful error pop-up
+        this.showErrorAlert(error.message || 'Error en el registro');
       }
     }
+  }
+
+  /**
+   * Displays a beautiful error alert pop-up
+   * @param message Error message to display
+   */
+  showErrorAlert(message: string) {
+    this.snackBar.open(message, 'Cerrar', {
+      duration: 5000,
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+      panelClass: ['error-snackbar']
+    });
   }
 }
