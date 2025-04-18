@@ -19,9 +19,9 @@ export const navItems: NavItem[] = [
     route: '/herramientas-de-trabajo/paciente',
   },
   {
-    displayName: 'Insignias',
-    iconName: 'archive',
-    route: '/herramientas-de-trabajo/badge',
+    displayName: 'Ficha Clínica',
+    iconName: 'file-text',
+    route: '/herramientas-de-trabajo/fichaClinica',
   },
   {
     displayName: 'Chips',
@@ -32,11 +32,6 @@ export const navItems: NavItem[] = [
     displayName: 'Listas',
     iconName: 'list-details',
     route: '/herramientas-de-trabajo/lists',
-  },
-  {
-    displayName: 'Menú',
-    iconName: 'file-text',
-    route: '/herramientas-de-trabajo/menu',
   },
   {
     displayName: 'Tooltips',

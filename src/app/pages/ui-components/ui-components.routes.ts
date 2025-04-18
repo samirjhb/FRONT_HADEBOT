@@ -1,21 +1,21 @@
 import { Routes } from '@angular/router';
 
 // ui
-import { AppBadgeComponent } from './badge/badge.component';
 import { AppChipsComponent } from './chips/chips.component';
 import { AppListsComponent } from './lists/lists.component';
 import { AppMenuComponent } from './menu/menu.component';
 import { AppTooltipsComponent } from './tooltips/tooltips.component';
 import { AppTablesComponent } from './tables/tables.component';
 import { PacienteComponent } from 'src/app/components/paciente/paciente.component';
+import { FichaClinicaComponent } from 'src/app/components/ficha-clinica/ficha-clinica.component';
 
 export const UiComponentsRoutes: Routes = [
   {
     path: '',
     children: [
       {
-        path: 'badge',
-        component: AppBadgeComponent,
+        path: 'fichaClinica',
+        component: FichaClinicaComponent,
       },
       {
         path: 'chips',
