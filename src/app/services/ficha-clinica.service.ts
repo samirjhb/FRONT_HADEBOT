@@ -14,7 +14,7 @@ export interface DentalTreatment {
   price: number;
   status: 'Pendiente' | 'En proceso' | 'Completado' | 'Cancelado';
   deposit: number;
-  appointmentDate: Date;
+  appointmentDate?: Date;
   observations?: string;
 }
 
@@ -40,7 +40,7 @@ export interface CreateClinicalRecordDto {
     price: number;
     status?: string;
     deposit?: number;
-    appointmentDate: Date;
+    appointmentDate?: Date;
     observations?: string;
   }[];
   attachments?: string[];
@@ -55,7 +55,7 @@ export interface AddTreatmentDto {
   price: number;
   status?: string;
   deposit?: number;
-  appointmentDate: Date;
+  appointmentDate?: Date;
   observations?: string;
 }
 

@@ -19,6 +19,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatDividerModule } from '@angular/material/divider';
 import { DepositDialogComponent } from '../dialogs/deposit-dialog/deposit-dialog.component';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatStepperModule } from '@angular/material/stepper';
@@ -29,6 +30,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../dialogs/confirm-dialog/confirm-dialog.component';
 import { MatTableDataSource } from '@angular/material/table';
 import { DirectivesModule } from 'src/app/directives/directives.module';
+import { PdfService } from 'src/app/services/pdf.service';
+import dentalPieces from 'src/assets/i18n/dental-pieces.json';
 
 // Interfaz para los datos de la tabla de fichas clínicas adaptada al modelo del backend
 export interface FichaClinicaData {
@@ -83,7 +86,8 @@ const FICHAS_EJEMPLO: FichaClinicaData[] = [];
     MatExpansionModule,
     MatStepperModule,
     MatTooltipModule,
-    MatTabsModule
+    MatTabsModule,
+    MatDividerModule
   ],
 })
 export class FichaClinicaComponent implements OnInit {
@@ -99,6 +103,7 @@ export class FichaClinicaComponent implements OnInit {
   showTreatmentForm: boolean = false;
   currentTreatmentIndex: number | null = null;
   isDetailView: boolean = false;
+  dentalPieces: any[] = [];
   selectedFicha: FichaClinicaData | null = null;
 
   // Variables para filtrado
@@ -141,7 +146,8 @@ export class FichaClinicaComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private pdfService: PdfService
   ) { }
 
   // Inicializar el formulario principal de ficha clínica
@@ -175,7 +181,7 @@ export class FichaClinicaComponent implements OnInit {
       treatment: [treatment?.treatment || '', Validators.required],
       price: [treatment?.price || '', [Validators.required, Validators.min(0)]],
       deposit: [treatment?.deposit || 0, [Validators.min(0)]],
-      appointmentDate: [treatment?.appointmentDate ? new Date(treatment.appointmentDate) : new Date(), Validators.required],
+      appointmentDate: [treatment?.appointmentDate ? new Date(treatment.appointmentDate) : null],
       status: [treatment?.status || 'Pendiente', Validators.required],
       observations: [treatment?.observations || '']
     });
@@ -192,6 +198,7 @@ export class FichaClinicaComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.dentalPieces = dentalPieces;
     this.initForm();
     this.loadPacientes();
     this.loadFichasClinicas();
@@ -559,7 +566,7 @@ export class FichaClinicaComponent implements OnInit {
           price: treatment.price,
           deposit: treatment.deposit || 0,
           status: treatment.status,
-          appointmentDate: treatment.appointmentDate,
+          appointmentDate: treatment.appointmentDate ? new Date(treatment.appointmentDate) : undefined,
           observations: treatment.observations
         };
       }),
@@ -712,7 +719,7 @@ export class FichaClinicaComponent implements OnInit {
               treatment: [treatment.treatment, Validators.required],
               price: [treatment.price, [Validators.required, Validators.min(0)]],
               deposit: [treatment.deposit || 0, [Validators.min(0)]],
-              appointmentDate: [new Date(treatment.appointmentDate), Validators.required],
+              appointmentDate: [treatment.appointmentDate ? new Date(treatment.appointmentDate) : null],
               status: [treatment.status, Validators.required],
               observations: [treatment.observations || '']
             });
@@ -744,7 +751,7 @@ export class FichaClinicaComponent implements OnInit {
             treatment: [treatment.treatment, Validators.required],
             price: [treatment.price, [Validators.required, Validators.min(0)]],
             deposit: [treatment.deposit || 0, [Validators.min(0)]],
-            appointmentDate: [new Date(treatment.appointmentDate), Validators.required],
+            appointmentDate: [treatment.appointmentDate ? new Date(treatment.appointmentDate) : null],
             status: [treatment.status, Validators.required],
             observations: [treatment.observations || '']
           });
@@ -803,7 +810,7 @@ export class FichaClinicaComponent implements OnInit {
           treatment: [treatmentData.treatment, Validators.required],
           price: [treatmentData.price, [Validators.required, Validators.min(0)]],
           deposit: [treatmentData.deposit || 0, [Validators.min(0)]],
-          appointmentDate: [treatmentData.appointmentDate, Validators.required],
+          appointmentDate: [treatmentData.appointmentDate],
           status: [treatmentData.status, Validators.required],
           observations: [treatmentData.observations || '']
         });
@@ -999,8 +1006,8 @@ export class FichaClinicaComponent implements OnInit {
           // Recalcular la próxima cita para esta ficha
           const today = new Date();
           const futureAppointments = this.fichas[fichaIndex].treatments
-            .filter(t => new Date(t.appointmentDate) >= today && t.status !== 'Completado' && t.status !== 'Cancelado')
-            .map(t => new Date(t.appointmentDate));
+            .filter(t => t.appointmentDate && new Date(t.appointmentDate) >= today && t.status !== 'Completado' && t.status !== 'Cancelado')
+            .map(t => t.appointmentDate ? new Date(t.appointmentDate) : new Date());
           
           this.fichas[fichaIndex].nextAppointment = futureAppointments.length > 0
             ? new Date(Math.min(...futureAppointments.map((d: Date) => d.getTime())))
@@ -1103,9 +1110,11 @@ export class FichaClinicaComponent implements OnInit {
   }
 
   // Método para formatear la fecha
-  formatDate(date: Date): string {
+  formatDate(date?: Date): string {
     if (!date) return '';
     const d = new Date(date);
+    // Verificar si la fecha es válida
+    if (isNaN(d.getTime())) return '';
     return d.toLocaleDateString('es-CL');
   }
 
@@ -1185,5 +1194,21 @@ export class FichaClinicaComponent implements OnInit {
     } else {
       this.dataSource.filter = '';
     }
+  }
+
+  // Método para generar un presupuesto en PDF
+  generateBudget(ficha: FichaClinicaData) {
+    // Usar la ruta estática del logo
+    const logoUrl = 'assets/images/logos/logoHadebot.png';
+    
+    // Generar el PDF
+    this.pdfService.generateBudgetPdf(ficha, logoUrl);
+    
+    // Mostrar mensaje de éxito
+    this.snackBar.open(
+      'Presupuesto generado correctamente', 
+      'Cerrar', 
+      { duration: 3000, panelClass: ['success-snackbar'] }
+    );
   }
 }

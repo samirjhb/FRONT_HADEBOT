@@ -139,6 +139,11 @@
                     <i-tabler name="trash" class="icon-18 me-2"></i-tabler>
                     <span>Eliminar</span>
                   </button>
+                  <mat-divider></mat-divider>
+                  <button mat-menu-item (click)="generateBudget(element)">
+                    <i-tabler name="file-invoice" class="icon-18 me-2"></i-tabler>
+                    <span>Generar Presupuesto</span>
+                  </button>
                 </mat-menu>
               </td>
             </ng-container>
@@ -230,7 +235,8 @@
                     [style.width.%]="getPaymentPercentage(selectedFicha.totalDeposit, selectedFicha.totalPrice)"></div>
                 </div>
                 <div class="d-flex justify-content-between mt-1">
-                  <small>Pagado: {{ getPaymentPercentage(selectedFicha.totalDeposit, selectedFicha.totalPrice) }}%</small>
+                  <small>Pagado: {{ getPaymentPercentage(selectedFicha.totalDeposit, selectedFicha.totalPrice)
+                    }}%</small>
                 </div>
               </mat-card-content>
             </mat-card>
@@ -266,18 +272,23 @@
                 <td [ngClass]="calcularSaldo(treatment.price, treatment.deposit) > 0 ? 'text-danger' : 'text-success'">
                   {{ formatPrice(calcularSaldo(treatment.price, treatment.deposit)) }}
                 </td>
-                <td>{{ formatDate(treatment.appointmentDate) }}</td>
+                <td *ngIf="treatment.appointmentDate">{{ formatDate(treatment.appointmentDate) }}</td>
+                <td *ngIf="!treatment.appointmentDate">Sin citas pendientes</td>
                 <td>
-                  <span *ngIf="treatment.status === 'Pendiente'" class="bg-light-warning text-warning rounded f-w-600 p-6 p-y-4 f-s-12">
+                  <span *ngIf="treatment.status === 'Pendiente'"
+                    class="bg-light-warning text-warning rounded f-w-600 p-6 p-y-4 f-s-12">
                     Pendiente
                   </span>
-                  <span *ngIf="treatment.status === 'En proceso'" class="bg-light-primary text-primary rounded f-w-600 p-6 p-y-4 f-s-12">
+                  <span *ngIf="treatment.status === 'En proceso'"
+                    class="bg-light-primary text-primary rounded f-w-600 p-6 p-y-4 f-s-12">
                     En proceso
                   </span>
-                  <span *ngIf="treatment.status === 'Completado'" class="bg-light-success text-success rounded f-w-600 p-6 p-y-4 f-s-12">
+                  <span *ngIf="treatment.status === 'Completado'"
+                    class="bg-light-success text-success rounded f-w-600 p-6 p-y-4 f-s-12">
                     Completado
                   </span>
-                  <span *ngIf="treatment.status === 'Cancelado'" class="bg-light-error text-error rounded f-w-600 p-6 p-y-4 f-s-12">
+                  <span *ngIf="treatment.status === 'Cancelado'"
+                    class="bg-light-error text-error rounded f-w-600 p-6 p-y-4 f-s-12">
                     Cancelado
                   </span>
                 </td>
@@ -291,15 +302,18 @@
                     <mat-menu #statusMenu="matMenu">
                       <button mat-menu-item (click)="updateTreatmentStatus(i, 'Pendiente')"
                         [disabled]="treatment.status === 'Pendiente'">
-                        <span class="bg-light-warning text-warning rounded f-w-600 p-6 p-y-4 f-s-12 me-2">Pendiente</span>
+                        <span
+                          class="bg-light-warning text-warning rounded f-w-600 p-6 p-y-4 f-s-12 me-2">Pendiente</span>
                       </button>
                       <button mat-menu-item (click)="updateTreatmentStatus(i, 'En proceso')"
                         [disabled]="treatment.status === 'En proceso'">
-                        <span class="bg-light-primary text-primary rounded f-w-600 p-6 p-y-4 f-s-12 me-2">En proceso</span>
+                        <span class="bg-light-primary text-primary rounded f-w-600 p-6 p-y-4 f-s-12 me-2">En
+                          proceso</span>
                       </button>
                       <button mat-menu-item (click)="updateTreatmentStatus(i, 'Completado')"
                         [disabled]="treatment.status === 'Completado'">
-                        <span class="bg-light-success text-success rounded f-w-600 p-6 p-y-4 f-s-12 me-2">Completado</span>
+                        <span
+                          class="bg-light-success text-success rounded f-w-600 p-6 p-y-4 f-s-12 me-2">Completado</span>
                       </button>
                       <button mat-menu-item (click)="updateTreatmentStatus(i, 'Cancelado')"
                         [disabled]="treatment.status === 'Cancelado'">
@@ -420,18 +434,24 @@
                       <td>{{ treatment.get('treatment')?.value }}</td>
                       <td>{{ formatPrice(treatment.get('price')?.value) }}</td>
                       <td>{{ formatPrice(treatment.get('deposit')?.value) }}</td>
-                      <td>{{ formatDate(treatment.get('appointmentDate')?.value) }}</td>
+                      <td *ngIf="treatment.get('appointmentDate')?.value">{{
+                        formatDate(treatment.get('appointmentDate')?.value) }}</td>
+                      <td *ngIf="!treatment.get('appointmentDate')?.value">Sin citas pendientes</td>
                       <td>
-                        <span *ngIf="treatment.get('status')?.value === 'Pendiente'" class="bg-light-warning text-warning rounded f-w-600 p-6 p-y-4 f-s-12">
+                        <span *ngIf="treatment.get('status')?.value === 'Pendiente'"
+                          class="bg-light-warning text-warning rounded f-w-600 p-6 p-y-4 f-s-12">
                           Pendiente
                         </span>
-                        <span *ngIf="treatment.get('status')?.value === 'En proceso'" class="bg-light-primary text-primary rounded f-w-600 p-6 p-y-4 f-s-12">
+                        <span *ngIf="treatment.get('status')?.value === 'En proceso'"
+                          class="bg-light-primary text-primary rounded f-w-600 p-6 p-y-4 f-s-12">
                           En proceso
                         </span>
-                        <span *ngIf="treatment.get('status')?.value === 'Completado'" class="bg-light-success text-success rounded f-w-600 p-6 p-y-4 f-s-12">
+                        <span *ngIf="treatment.get('status')?.value === 'Completado'"
+                          class="bg-light-success text-success rounded f-w-600 p-6 p-y-4 f-s-12">
                           Completado
                         </span>
-                        <span *ngIf="treatment.get('status')?.value === 'Cancelado'" class="bg-light-error text-error rounded f-w-600 p-6 p-y-4 f-s-12">
+                        <span *ngIf="treatment.get('status')?.value === 'Cancelado'"
+                          class="bg-light-error text-error rounded f-w-600 p-6 p-y-4 f-s-12">
                           Cancelado
                         </span>
                       </td>
@@ -503,7 +523,17 @@
                       <div class="col-lg-6 mb-3">
                         <mat-form-field appearance="outline" class="w-100">
                           <mat-label>Pieza Dental</mat-label>
-                          <input matInput formControlName="toothNumber" placeholder="Ej: 36" type="number">
+                          <mat-select formControlName="toothNumber">
+                            <mat-option value="">Seleccione una pieza dental</mat-option>
+                            <ng-container *ngFor="let group of dentalPieces">
+                              <mat-optgroup [label]="group.label">
+                                <mat-option *ngFor="let option of group.options" [value]="option.value">
+                                  {{ option.label }}
+                                </mat-option>
+                              </mat-optgroup>
+                            </ng-container>
+                          </mat-select>
+
                           <ng-container
                             *ngIf="treatmentForm.get('toothNumber')?.invalid && treatmentForm.get('toothNumber')?.touched">
                             <mat-error>
@@ -512,6 +542,7 @@
                           </ng-container>
                         </mat-form-field>
                       </div>
+
 
                       <!-- Tratamiento -->
                       <div class="col-lg-6 mb-3">
