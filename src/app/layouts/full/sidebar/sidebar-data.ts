@@ -11,51 +11,22 @@ export const navItems: NavItem[] = [
   },
 
   {
-    navCap: 'Herramientas de Trabajo',
+    navCap: 'Gestión Clínica',
   },
   {
-    displayName: 'Paciente',
-    iconName: 'clipboard-text',
+    displayName: 'Pacientes',
+    iconName: 'users',
     route: '/herramientas-de-trabajo/paciente',
   },
   {
-    displayName: 'Ficha Clínica',
+    displayName: 'Fichas Clínicas',
     iconName: 'file-text',
     route: '/herramientas-de-trabajo/fichaClinica',
   },
   {
-    displayName: 'Chips',
-    iconName: 'info-circle',
-    route: '/herramientas-de-trabajo/chips',
-  },
-  {
-    displayName: 'Listas',
-    iconName: 'list-details',
-    route: '/herramientas-de-trabajo/lists',
-  },
-  {
-    displayName: 'Tooltips',
-    iconName: 'file-text-ai',
-    route: '/herramientas-de-trabajo/tooltips',
-  },
-  {
-    displayName: 'Tablas',
-    iconName: 'table',
-    route: '/herramientas-de-trabajo/tables',
-  },
-
-  {
-    navCap: 'Extra',
-  },
-  {
-    displayName: 'Iconos',
-    iconName: 'mood-smile',
-    route: '/extra/icons',
-  },
-  {
-    displayName: 'Página de Ejemplo',
-    iconName: 'brand-dribbble',
-    route: '/extra/sample-page',
+    displayName: 'Citas',
+    iconName: 'calendar',
+    route: '/citas',
   },
 
   {

@@ -31,7 +31,7 @@
         </div>
 
         <div class="table-responsive">
-          <table mat-table [dataSource]="dataSource" class="w-100" matSort>
+          <table mat-table [dataSource]="dataSource" class="w-100" matSort *ngIf="dataSource" [trackBy]="trackByFn">
             <!-- Paciente Column -->
             <ng-container matColumnDef="paciente">
               <th mat-header-cell *matHeaderCellDef mat-sort-header class="f-w-600 f-s-14">
@@ -256,7 +256,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let treatment of selectedFicha.treatments; let i = index">
+              <tr *ngFor="let treatment of selectedFicha.treatments; let i = index; trackBy: trackByFn">
                 <td>{{ i + 1 }}</td>
                 <td>{{ treatment.diagnosis }}</td>
                 <td>{{ treatment.toothNumber }}</td>
@@ -413,7 +413,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let treatment of treatments.controls; let i = index">
+                    <tr *ngFor="let treatment of treatments.controls; let i = index; trackBy: trackByFn">
                       <td>{{ i + 1 }}</td>
                       <td>{{ treatment.get('diagnosis')?.value }}</td>
                       <td>{{ treatment.get('toothNumber')?.value }}</td>

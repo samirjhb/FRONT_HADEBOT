@@ -20,11 +20,17 @@ export const routes: Routes = [
           import('./pages/pages.routes').then((m) => m.PagesRoutes),
       },
       {
+        path: 'citas',
+        loadComponent: () =>
+          import('./pages/ui-components/citas/citas.component').then(
+            (c) => c.CitasComponent
+          ),
+        title: 'Citas',
+      },
+      {
         path: 'herramientas-de-trabajo',
         loadChildren: () =>
-          import('./pages/ui-components/ui-components.routes').then(
-            (m) => m.UiComponentsRoutes
-          ),
+          import('./pages/ui-components/ui-components.routes').then((m) => m.routes),
       },
       {
         path: 'extra',

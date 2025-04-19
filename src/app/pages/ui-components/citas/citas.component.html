@@ -1,0 +1,84 @@
+<mat-card class="cardWithShadow theme-card">
+  <mat-card-header>
+    <mat-card-title class="m-b-0">Gestión de Citas</mat-card-title>
+  </mat-card-header>
+  <mat-card-content class="b-t-1">
+    <div class="row">
+      <!-- Formulario de nueva cita -->
+      <div class="col-lg-4">
+        <mat-card class="b-1 shadow-none">
+          <mat-card-header>
+            <mat-card-title>Nueva Cita</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="b-t-1">
+            <form [formGroup]="appointmentForm" (ngSubmit)="createAppointment()">
+              <mat-form-field class="w-100 m-b-12">
+                <mat-label>Paciente</mat-label>
+                <mat-select formControlName="paciente">
+                  <mat-option *ngFor="let patient of patients$ | async" [value]="patient._id">
+                    <div class="d-flex align-items-center">
+                      <i-tabler name="user-circle" class="icon-20 me-2"></i-tabler>
+                      <span>{{patient.name}}</span>
+                    </div>
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field class="w-100 m-b-12">
+                <mat-label>Fecha</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="fecha">
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field class="w-100 m-b-12">
+                <mat-label>Hora (HH:MM)</mat-label>
+                <input matInput formControlName="hora" placeholder="14:30">
+                <mat-error *ngIf="appointmentForm.get('hora')?.errors?.['pattern']">
+                  Formato inválido. Use HH:MM (24 horas)
+                </mat-error>
+              </mat-form-field>
+
+              <button mat-raised-button color="primary" type="submit" [disabled]="!appointmentForm.valid">
+                Crear Cita
+              </button>
+            </form>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Lista de citas -->
+      <div class="col-lg-8">
+        <mat-card class="b-1 shadow-none">
+          <mat-card-header>
+            <mat-card-title>Citas Programadas</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="b-t-1">
+            <mat-chip-listbox class="mat-mdc-chip-set-stacked" aria-label="Citas">
+              <mat-chip-option 
+                *ngFor="let appointment of appointments$ | async" 
+                [color]="appointment.completada ? 'accent' : 'primary'"
+                [selected]="appointment.completada"
+                class="f-s-14"
+              >
+                <div class="d-flex justify-content-between align-items-center w-100">
+                  <div class="d-flex align-items-center">
+                    <i-tabler name="user-circle" class="icon-20 me-2"></i-tabler>
+                    <span>{{getPatientFullName(appointment.paciente)}}</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <i-tabler name="calendar" class="icon-20 me-2"></i-tabler>
+                    <span>{{formatDate(appointment.fecha)}} - {{appointment.hora}}</span>
+                  </div>
+                  <button mat-icon-button (click)="deleteAppointment(appointment._id || '')">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              </mat-chip-option>
+            </mat-chip-listbox>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

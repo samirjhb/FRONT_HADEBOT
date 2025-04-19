@@ -1,46 +1,25 @@
 import { Routes } from '@angular/router';
 
-// ui
-import { AppChipsComponent } from './chips/chips.component';
-import { AppListsComponent } from './lists/lists.component';
-import { AppMenuComponent } from './menu/menu.component';
-import { AppTooltipsComponent } from './tooltips/tooltips.component';
-import { AppTablesComponent } from './tables/tables.component';
-import { PacienteComponent } from 'src/app/components/paciente/paciente.component';
-import { FichaClinicaComponent } from 'src/app/components/ficha-clinica/ficha-clinica.component';
-
-export const UiComponentsRoutes: Routes = [
+export const routes: Routes = [
   {
     path: '',
     children: [
       {
         path: 'fichaClinica',
-        component: FichaClinicaComponent,
-      },
-      {
-        path: 'chips',
-        component: AppChipsComponent,
-      },
-      {
-        path: 'lists',
-        component: AppListsComponent,
-      },
-      {
-        path: 'menu',
-        component: AppMenuComponent,
-      },
-      {
-        path: 'tooltips',
-        component: AppTooltipsComponent,
+        loadComponent: () =>
+          import('../../components/ficha-clinica/ficha-clinica.component').then(
+            (c) => c.FichaClinicaComponent
+          ),
+        title: 'Ficha Clínica',
       },
       {
         path: 'paciente',
-        component: PacienteComponent,
-      },
-      {
-        path: 'tables',
-        component: AppTablesComponent,
-      },
+        loadComponent: () =>
+          import('../../components/paciente/paciente.component').then(
+            (c) => c.PacienteComponent
+          ),
+        title: 'Pacientes',
+      }
     ],
   },
 ];

@@ -1,0 +1,118 @@
+// Estilos para la tabla
+.table-responsive {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.mat-mdc-table {
+  width: 100%;
+  background: white;
+}
+
+.mat-mdc-header-cell {
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.mat-mdc-cell {
+  color: rgba(0, 0, 0, 0.87);
+}
+
+// Estilos para los formularios
+.form-field-full-width {
+  width: 100%;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+// Estilos para los paneles de expansión
+.mat-expansion-panel {
+  margin-bottom: 0.5rem;
+}
+
+// Estilos para los botones
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+// Estilos para las tarjetas
+.mat-mdc-card {
+  margin-bottom: 1rem;
+}
+
+.mat-mdc-card-header {
+  background: rgba(0, 0, 0, 0.03);
+  padding: 1rem;
+}
+
+.mat-mdc-card-content {
+  padding: 1rem;
+}
+
+// Estilos para los estados
+.status-chip {
+  border-radius: 16px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  
+  &.pending {
+    background-color: #fff3e0;
+    color: #e65100;
+  }
+  
+  &.in-progress {
+    background-color: #e3f2fd;
+    color: #1565c0;
+  }
+  
+  &.completed {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+}
+
+// Estilos para los filtros y búsqueda
+.filter-section {
+  margin-bottom: 1rem;
+  
+  .mat-mdc-form-field {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+// Estilos para la paginación
+.mat-mdc-paginator {
+  background: transparent;
+}
+
+// Estilos para los tooltips
+.info-icon {
+  font-size: 18px;
+  vertical-align: middle;
+  margin-left: 4px;
+  color: rgba(0, 0, 0, 0.54);
+  cursor: help;
+}
+
+// Estilos para los mensajes de error y validación
+.error-message {
+  color: #f44336;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+// Estilos para los estados de carga
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}

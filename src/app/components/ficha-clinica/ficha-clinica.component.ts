@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, FormArray, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -10,24 +10,24 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
-import { FichaClinicaService, ClinicalRecord, CreateClinicalRecordDto, DentalTreatment, AddTreatmentDto, UpdateStatusDto, AddDepositDto, UpdateAppointmentDateDto, FilterClinicalRecordDto } from 'src/app/services/ficha-clinica.service';
-import { PacienteService } from 'src/app/services/paciente.service';
 import { MatIconModule } from '@angular/material/icon';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatDialog } from '@angular/material/dialog';
-import { ConfirmDialogComponent } from '../dialogs/confirm-dialog/confirm-dialog.component';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
-import { DirectivesModule } from 'src/app/directives/directives.module';
+import { Router, ActivatedRoute } from '@angular/router';
+import { FichaClinicaService, ClinicalRecord, CreateClinicalRecordDto, DentalTreatment, AddTreatmentDto, UpdateStatusDto, AddDepositDto, UpdateAppointmentDateDto, FilterClinicalRecordDto } from 'src/app/services/ficha-clinica.service';
+import { PacienteService } from 'src/app/services/paciente.service';
+import { ConfirmDialogComponent } from '../dialogs/confirm-dialog/confirm-dialog.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 // Interfaz para los datos de la tabla de fichas clínicas adaptada al modelo del backend
 export interface FichaClinicaData {
@@ -54,26 +54,25 @@ const FICHAS_EJEMPLO: FichaClinicaData[] = [];
 @Component({
   selector: 'app-ficha-clinica',
   templateUrl: './ficha-clinica.component.html',
-  styleUrls: ['./ficha-clinica.component.css'],
+  styleUrls: ['./ficha-clinica.component.scss'],
   standalone: true,
   imports: [
+    CommonModule,
     MatFormFieldModule,
+    MatInputModule,
     MatSelectModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatRadioModule,
     MatButtonModule,
     MatCardModule,
-    MatInputModule,
     MatCheckboxModule,
+    MatRadioModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
     NgIf,
     NgFor,
     MatIconModule,
     TablerIconsModule,
-    DirectivesModule,
     MatSnackBarModule,
     MatTableModule,
     MatMenuModule,
@@ -82,8 +81,9 @@ const FICHAS_EJEMPLO: FichaClinicaData[] = [];
     MatExpansionModule,
     MatStepperModule,
     MatTooltipModule,
-    MatTabsModule
-  ],
+    MatTabsModule,
+    MatDialogModule
+  ]
 })
 export class FichaClinicaComponent implements OnInit {
   fichaClinicaForm: FormGroup;
@@ -1102,5 +1102,9 @@ export class FichaClinicaComponent implements OnInit {
     } else {
       this.dataSource.filter = '';
     }
+  }
+
+  trackByFn(index: number, item: any): any {
+    return item.id || index;
   }
 }
