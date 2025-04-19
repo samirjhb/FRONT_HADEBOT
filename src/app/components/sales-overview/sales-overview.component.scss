@@ -1,0 +1,69 @@
+/* Estilos para el calendario */
+.calendar-container {
+  height: 650px;
+  margin-top: 20px;
+}
+
+.fc { /* the calendar root */
+  max-width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  font-family: inherit;
+}
+
+.fc-event {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.fc-toolbar-title {
+  font-size: 1.5em;
+  font-weight: 500;
+  color: #333;
+}
+
+.fc-button-primary {
+  background-color: #5D87FF !important;
+  border-color: #5D87FF !important;
+}
+
+.fc-button-primary:hover {
+  background-color: #4a6ecc !important;
+  border-color: #4a6ecc !important;
+}
+
+.fc-button-primary:disabled {
+  background-color: #9db5ff !important;
+  border-color: #9db5ff !important;
+}
+
+.fc-daygrid-day.fc-day-today {
+  background-color: rgba(93, 135, 255, 0.1) !important;
+}
+
+.fc-daygrid-day-number {
+  font-weight: 500;
+}
+
+.fc-col-header-cell {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .calendar-container {
+    height: 500px;
+  }
+  
+  .fc-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+  }
+}

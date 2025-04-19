@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -19,6 +19,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { DepositDialogComponent } from '../dialogs/deposit-dialog/deposit-dialog.component';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -139,6 +140,7 @@ export class FichaClinicaComponent implements OnInit {
     private snackBar: MatSnackBar,
     private router: Router,
     private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef,
     private dialog: MatDialog
   ) { }
 
@@ -838,7 +840,7 @@ export class FichaClinicaComponent implements OnInit {
     if (!this.selectedFicha) return;
     
     // Abrir diálogo para ingresar monto
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+    const dialogRef = this.dialog.open(DepositDialogComponent, {
       width: '400px',
       data: {
         title: 'Registrar Abono',
@@ -847,15 +849,12 @@ export class FichaClinicaComponent implements OnInit {
         cancelText: 'Cancelar',
         icon: 'cash',
         iconColor: 'text-success',
-        showInput: true,
-        inputType: 'number',
-        inputPlaceholder: 'Monto'
+        amount: 0
       }
     });
     
-    dialogRef.afterClosed().subscribe(async (result) => {
-      if (result && result.input) {
-        const amount = Number(result.input);
+    dialogRef.afterClosed().subscribe(async (amount) => {
+      if (amount) {
         if (amount <= 0) {
           this.snackBar.open('El monto debe ser mayor a cero', 'Cerrar', {
             duration: 5000,
@@ -873,9 +872,42 @@ export class FichaClinicaComponent implements OnInit {
               depositData
             );
             
-            // Actualizar la vista
-            if (this.selectedFicha) {
-              this.viewFichaDetail(this.selectedFicha._id);
+            // Actualizar los datos locales primero
+            if (this.selectedFicha && this.selectedFicha.treatments && this.selectedFicha.treatments[treatmentIndex]) {
+              // Actualizar el depósito en el objeto seleccionado
+              const currentDeposit = this.selectedFicha.treatments[treatmentIndex].deposit || 0;
+              this.selectedFicha.treatments[treatmentIndex].deposit = currentDeposit + amount;
+              
+              // Actualizar también en el array de fichas si existe
+              const fichaIndex = this.fichas.findIndex(f => f._id === this.selectedFicha?._id);
+              if (fichaIndex !== -1 && this.fichas[fichaIndex].treatments && this.fichas[fichaIndex].treatments[treatmentIndex]) {
+                const currentArrayDeposit = this.fichas[fichaIndex].treatments[treatmentIndex].deposit || 0;
+                this.fichas[fichaIndex].treatments[treatmentIndex].deposit = currentArrayDeposit + amount;
+                
+                // Recalcular los totales para la ficha en el array
+                const totalDeposit = this.fichas[fichaIndex].treatments.reduce((sum, t) => sum + (t.deposit || 0), 0);
+                const totalPrice = this.fichas[fichaIndex].treatments.reduce((sum, t) => sum + (t.price || 0), 0);
+                
+                // Actualizar los valores calculados en la ficha
+                this.fichas[fichaIndex].totalDeposit = totalDeposit;
+                this.fichas[fichaIndex].balance = totalPrice - totalDeposit;
+                this.fichas[fichaIndex].percentagePaid = totalPrice > 0 ? (totalDeposit / totalPrice) * 100 : 0;
+              }
+              
+              // Recalcular los totales y porcentajes para la ficha seleccionada
+              const recalculatedFicha = this.processFichasData([this.selectedFicha])[0];
+              this.selectedFicha = recalculatedFicha;
+              
+              // Actualizar el dataSource de la tabla con los datos actualizados
+              this.dataSource.data = [...this.fichas];
+              
+              // Si hay paginador, mantener la configuración
+              if (this.paginator) {
+                this.dataSource.paginator = this.paginator;
+              }
+              
+              // Forzar detección de cambios
+              this.cdr.detectChanges();
             }
             
             this.snackBar.open('Abono registrado exitosamente', 'Cerrar', {
@@ -895,19 +927,40 @@ export class FichaClinicaComponent implements OnInit {
   }
   
   // Actualizar el estado de un tratamiento (en vista detallada)
-  async updateTreatmentStatus(treatmentIndex: number, newStatus: string) {
+  async updateTreatmentStatus(treatmentIndex: number, newStatus: 'Pendiente' | 'En proceso' | 'Completado' | 'Cancelado') {
     if (!this.selectedFicha) return;
     
     try {
-      const statusData: UpdateStatusDto = { status: newStatus as 'Pendiente' | 'En proceso' | 'Completado' | 'Cancelado' };
+      const statusData: UpdateStatusDto = { status: newStatus };
       await this.fichaClinicaService.updateTreatmentStatus(
         this.selectedFicha._id, 
         treatmentIndex, 
         statusData
       );
       
-      // Actualizar la vista
-      this.viewFichaDetail(this.selectedFicha._id);
+      // Actualizar los datos locales primero
+      if (this.selectedFicha && this.selectedFicha.treatments && this.selectedFicha.treatments[treatmentIndex]) {
+        // Actualizar el estado en el objeto seleccionado
+        this.selectedFicha.treatments[treatmentIndex].status = newStatus;
+        
+        // Actualizar también en el array de fichas si existe
+        const fichaIndex = this.fichas.findIndex(f => f._id === this.selectedFicha?._id);
+        if (fichaIndex !== -1 && this.fichas[fichaIndex].treatments && this.fichas[fichaIndex].treatments[treatmentIndex]) {
+          this.fichas[fichaIndex].treatments[treatmentIndex].status = newStatus;
+        }
+        
+        // Recalcular los totales y porcentajes
+        if (this.selectedFicha) {
+          const recalculatedFicha = this.processFichasData([this.selectedFicha])[0];
+          this.selectedFicha = recalculatedFicha;
+        }
+        
+        // Actualizar el dataSource de la tabla
+        this.initializeDataSource();
+      }
+      
+      // Forzar detección de cambios
+      this.cdr.detectChanges();
       
       this.snackBar.open('Estado actualizado exitosamente', 'Cerrar', {
         duration: 5000,
@@ -933,9 +986,39 @@ export class FichaClinicaComponent implements OnInit {
         treatmentIndex, 
         dateData
       );
+            // Actualizar los datos locales primero
+      if (this.selectedFicha && this.selectedFicha.treatments && this.selectedFicha.treatments[treatmentIndex]) {
+        // Actualizar la fecha en el objeto seleccionado
+        this.selectedFicha.treatments[treatmentIndex].appointmentDate = newDate;
+        
+        // Actualizar también en el array de fichas si existe
+        const fichaIndex = this.fichas.findIndex(f => f._id === this.selectedFicha?._id);
+        if (fichaIndex !== -1 && this.fichas[fichaIndex].treatments && this.fichas[fichaIndex].treatments[treatmentIndex]) {
+          this.fichas[fichaIndex].treatments[treatmentIndex].appointmentDate = newDate;
+          
+          // Recalcular la próxima cita para esta ficha
+          const today = new Date();
+          const futureAppointments = this.fichas[fichaIndex].treatments
+            .filter(t => new Date(t.appointmentDate) >= today && t.status !== 'Completado' && t.status !== 'Cancelado')
+            .map(t => new Date(t.appointmentDate));
+          
+          this.fichas[fichaIndex].nextAppointment = futureAppointments.length > 0
+            ? new Date(Math.min(...futureAppointments.map((d: Date) => d.getTime())))
+            : undefined;
+        }
+        
+        // Recalcular los totales y porcentajes
+        if (this.selectedFicha) {
+          const recalculatedFicha = this.processFichasData([this.selectedFicha])[0];
+          this.selectedFicha = recalculatedFicha;
+        }
+        
+        // Actualizar el dataSource de la tabla
+        this.initializeDataSource();
+      }
       
-      // Actualizar la vista
-      this.viewFichaDetail(this.selectedFicha._id);
+      // Forzar detección de cambios
+      this.cdr.detectChanges();
       
       this.snackBar.open('Fecha de cita actualizada exitosamente', 'Cerrar', {
         duration: 5000,

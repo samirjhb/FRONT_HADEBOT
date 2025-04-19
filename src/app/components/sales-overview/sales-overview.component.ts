@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, signal, ViewChild } from '@angular/core';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MaterialModule } from 'src/app/material.module';
 
@@ -20,6 +20,15 @@ import {
   NgApexchartsModule,
 } from 'ng-apexcharts';
 import { MatButtonModule } from '@angular/material/button';
+import { CalendarOptions, DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core';
+import { createEventId, INITIAL_EVENTS } from './event-utils';
+import { FullCalendarModule } from '@fullcalendar/angular';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
+import { NgFor, NgIf } from '@angular/common';
+import esLocale from '@fullcalendar/core/locales/es';
 
 interface month {
   value: string;
@@ -43,111 +52,85 @@ export interface salesOverviewChart {
 
 @Component({
   selector: 'app-sales-overview',
-  imports: [MaterialModule, TablerIconsModule, NgApexchartsModule, MatButtonModule],
+  imports: [MaterialModule, TablerIconsModule, NgApexchartsModule, MatButtonModule, FullCalendarModule],
   templateUrl: './sales-overview.component.html',
+  styleUrls: ['./sales-overview.component.scss'],
+  standalone: true
 })
 export class AppSalesOverviewComponent {
+  calendarOptions = signal<CalendarOptions>({
+    plugins: [
+      interactionPlugin,
+      dayGridPlugin,
+      timeGridPlugin,
+      listPlugin,
+    ],
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+    },
+    initialView: 'dayGridMonth',
+    initialEvents: INITIAL_EVENTS,
+    weekends: true,
+    editable: true,
+    selectable: true,
+    selectMirror: true,
+    dayMaxEvents: true,
+    select: this.handleDateSelect.bind(this),
+    eventClick: this.handleEventClick.bind(this),
+    eventsSet: this.handleEvents.bind(this),
+    // Configuración en español
+    locale: esLocale,
+    buttonText: {
+      today: 'Hoy',
+      month: 'Mes',
+      week: 'Semana',
+      day: 'Día',
+      list: 'Lista'
+    },
+    allDayText: 'Todo el día',
+    firstDay: 1, // Lunes como primer día de la semana
+  });
+  currentEvents = signal<EventApi[]>([]);
 
-  @ViewChild('chart') chart: ChartComponent = Object.create(null);
-
-  public salesOverviewChart!: Partial<salesOverviewChart> | any;
-
-  months: month[] = [
-    { value: 'mar', viewValue: 'Sep 2025' },
-    { value: 'apr', viewValue: 'Oct 2025' },
-    { value: 'june', viewValue: 'Nov 2025' },
-  ];
-
-
-  constructor() {
-
-    // sales overview chart
-    this.salesOverviewChart = {
-      series: [
-        {
-          name: 'Eanings this month',
-          data: [355, 390, 300, 350, 390, 180, 355, 390],
-          color: '#5D87FF',
-        },
-        {
-          name: 'Expense this month',
-          data: [280, 250, 325, 215, 250, 310, 280, 250],
-          color: '#49BEFF',
-        },
-      ],
-
-      grid: {
-        borderColor: 'rgba(0,0,0,0.1)',
-        strokeDashArray: 3,
-        xaxis: {
-          lines: {
-            show: false,
-          },
-        },
-      },
-      plotOptions: {
-        bar: { horizontal: false, columnWidth: '35%', borderRadius: [4] },
-      },
-      chart: {
-        type: 'bar',
-        height: 390,
-        offsetX: -15,
-        toolbar: { show: false },
-        foreColor: '#adb0bb',
-        fontFamily: 'inherit',
-        sparkline: { enabled: false },
-      },
-      dataLabels: { enabled: false },
-      markers: { size: 0 },
-      legend: { show: false },
-      xaxis: {
-        type: 'category',
-        categories: [
-          '16/08',
-          '17/08',
-          '18/08',
-          '19/08',
-          '20/08',
-          '21/08',
-          '22/08',
-          '23/08',
-        ],
-        labels: {
-          style: { cssClass: 'grey--text lighten-2--text fill-color' },
-        },
-      },
-      yaxis: {
-        show: true,
-        min: 0,
-        max: 400,
-        tickAmount: 4,
-        labels: {
-          style: {
-            cssClass: 'grey--text lighten-2--text fill-color',
-          },
-        },
-      },
-      stroke: {
-        show: true,
-        width: 3,
-        lineCap: 'butt',
-        colors: ['transparent'],
-      },
-      tooltip: { theme: 'light' },
-
-      responsive: [
-        {
-          breakpoint: 600,
-          options: {
-            plotOptions: {
-              bar: {
-                borderRadius: 3,
-              },
-            },
-          },
-        },
-      ],
-    };
-
+  constructor(private changeDetector: ChangeDetectorRef) {
   }
+
+  // Método para actualizar opciones del calendario si es necesario
+  updateCalendarOptions(newOptions: Partial<CalendarOptions>) {
+    this.calendarOptions.update((options) => ({
+      ...options,
+      ...newOptions
+    }));
+  }
+
+  handleDateSelect(selectInfo: DateSelectArg) {
+    const title = prompt('Ingrese un título para la nueva cita');
+    const calendarApi = selectInfo.view.calendar;
+
+    calendarApi.unselect(); 
+
+    if (title) {
+      calendarApi.addEvent({
+        id: createEventId(),
+        title,
+        start: selectInfo.startStr,
+        end: selectInfo.endStr,
+        allDay: selectInfo.allDay
+      });
+    }
+  }
+
+  handleEventClick(clickInfo: EventClickArg) {
+    if (confirm(`¿Está seguro que desea eliminar la cita '${clickInfo.event.title}'?`)) {
+      clickInfo.event.remove();
+    }
+  }
+
+  handleEvents(events: EventApi[]) {
+    this.currentEvents.set(events);
+    this.changeDetector.detectChanges(); // workaround for pressionChangedAfterItHasBeenCheckedError
+  }
+  
 }

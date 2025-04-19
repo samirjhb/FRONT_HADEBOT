@@ -5,7 +5,6 @@ import { AppYearlyBreakupComponent } from 'src/app/components/yearly-breakup/yea
 import { AppMonthlyEarningsComponent } from 'src/app/components/monthly-earnings/monthly-earnings.component';
 import { AppRecentTransactionsComponent } from 'src/app/components/recent-transactions/recent-transactions.component';
 import { AppProductPerformanceComponent } from 'src/app/components/product-performance/product-performance.component';
-import { AppBlogCardsComponent } from 'src/app/components/blog-card/blog-card.component';
 
 
 @Component({
@@ -17,7 +16,6 @@ import { AppBlogCardsComponent } from 'src/app/components/blog-card/blog-card.co
     AppMonthlyEarningsComponent,
     AppRecentTransactionsComponent,
     AppProductPerformanceComponent,
-    AppBlogCardsComponent
   ],
   templateUrl: './starter.component.html',
   encapsulation: ViewEncapsulation.None,
