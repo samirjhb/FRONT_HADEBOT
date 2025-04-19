@@ -45,20 +45,6 @@ export const navItems: NavItem[] = [
   },
 
   {
-    navCap: 'Extra',
-  },
-  {
-    displayName: 'Iconos',
-    iconName: 'mood-smile',
-    route: '/extra/icons',
-  },
-  {
-    displayName: 'Página de Ejemplo',
-    iconName: 'brand-dribbble',
-    route: '/extra/sample-page',
-  },
-
-  {
     navCap: 'Autenticación',
   },
   {
