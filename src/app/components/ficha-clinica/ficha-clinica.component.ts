@@ -98,6 +98,12 @@ export class FichaClinicaComponent implements OnInit {
   successMessage: string = '';
   errorMessage: string = '';
   isEditMode: boolean = false;
+  
+  // Variables para el selector de fecha y hora
+  selectedHour: number = new Date().getHours();
+  selectedMinute: number = new Date().getMinutes();
+  selectedDateTemp: Date | null = null;
+  selectedTreatmentIndex: number | null = null;
   currentFichaId: string | null = null;
   formTitle: string = 'Registro de Ficha Clínica';
   showTreatmentForm: boolean = false;
@@ -982,6 +988,52 @@ export class FichaClinicaComponent implements OnInit {
     }
   }
   
+  // Método para seleccionar la fecha (sin actualizar aún)
+  selectDate(treatmentIndex: number, newDate: Date) {
+    this.selectedDateTemp = newDate;
+    this.selectedTreatmentIndex = treatmentIndex;
+    
+    // Inicializar la hora con la hora actual o con la hora de la cita existente
+    if (this.selectedFicha && this.selectedFicha.treatments && this.selectedFicha.treatments[treatmentIndex]) {
+      const currentDate = this.selectedFicha.treatments[treatmentIndex].appointmentDate;
+      if (currentDate) {
+        this.selectedHour = currentDate.getHours();
+        this.selectedMinute = currentDate.getMinutes();
+      } else {
+        const now = new Date();
+        this.selectedHour = now.getHours();
+        this.selectedMinute = now.getMinutes();
+      }
+    } else {
+      const now = new Date();
+      this.selectedHour = now.getHours();
+      this.selectedMinute = now.getMinutes();
+    }
+  }
+
+  // Método para actualizar la hora seleccionada
+  updateTime(treatmentIndex: number) {
+    // Validar los valores de hora y minutos
+    if (this.selectedHour < 0) this.selectedHour = 0;
+    if (this.selectedHour > 23) this.selectedHour = 23;
+    if (this.selectedMinute < 0) this.selectedMinute = 0;
+    if (this.selectedMinute > 59) this.selectedMinute = 59;
+    
+    this.selectedTreatmentIndex = treatmentIndex;
+  }
+
+  // Método para confirmar la fecha y hora seleccionadas
+  async confirmDateTime(treatmentIndex: number) {
+    if (!this.selectedFicha || !this.selectedDateTemp) return;
+    
+    // Crear una nueva fecha con la fecha seleccionada y la hora especificada
+    const newDateTime = new Date(this.selectedDateTemp);
+    newDateTime.setHours(this.selectedHour, this.selectedMinute, 0);
+    
+    // Llamar al método de actualización con la nueva fecha y hora
+    await this.updateAppointmentDate(treatmentIndex, newDateTime);
+  }
+  
   // Actualizar la fecha de cita de un tratamiento (en vista detallada)
   async updateAppointmentDate(treatmentIndex: number, newDate: Date) {
     if (!this.selectedFicha) return;
@@ -1115,7 +1167,13 @@ export class FichaClinicaComponent implements OnInit {
     const d = new Date(date);
     // Verificar si la fecha es válida
     if (isNaN(d.getTime())) return '';
-    return d.toLocaleDateString('es-CL');
+    
+    // Formatear la fecha con hora
+    const fechaFormateada = d.toLocaleDateString('es-CL');
+    const horaFormateada = d.getHours().toString().padStart(2, '0') + ':' + 
+                          d.getMinutes().toString().padStart(2, '0');
+    
+    return `${fechaFormateada} ${horaFormateada}`;
   }
 
   // Método para formatear el precio

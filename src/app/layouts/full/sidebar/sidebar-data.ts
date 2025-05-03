@@ -23,26 +23,26 @@ export const navItems: NavItem[] = [
     iconName: 'file-text',
     route: '/herramientas-de-trabajo/fichaClinica',
   },
-  {
-    displayName: 'Chips',
-    iconName: 'info-circle',
-    route: '/herramientas-de-trabajo/chips',
-  },
-  {
-    displayName: 'Listas',
-    iconName: 'list-details',
-    route: '/herramientas-de-trabajo/lists',
-  },
-  {
-    displayName: 'Tooltips',
-    iconName: 'file-text-ai',
-    route: '/herramientas-de-trabajo/tooltips',
-  },
-  {
-    displayName: 'Tablas',
-    iconName: 'table',
-    route: '/herramientas-de-trabajo/tables',
-  },
+  // {
+  //   displayName: 'Chips',
+  //   iconName: 'info-circle',
+  //   route: '/herramientas-de-trabajo/chips',
+  // },
+  // {
+  //   displayName: 'Listas',
+  //   iconName: 'list-details',
+  //   route: '/herramientas-de-trabajo/lists',
+  // },
+  // {
+  //   displayName: 'Tooltips',
+  //   iconName: 'file-text-ai',
+  //   route: '/herramientas-de-trabajo/tooltips',
+  // },
+  // {
+  //   displayName: 'Tablas',
+  //   iconName: 'table',
+  //   route: '/herramientas-de-trabajo/tables',
+  // },
 
   {
     navCap: 'Autenticación',
