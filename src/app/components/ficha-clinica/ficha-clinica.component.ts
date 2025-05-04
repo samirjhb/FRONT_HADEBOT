@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -32,6 +32,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { DirectivesModule } from 'src/app/directives/directives.module';
 import { PdfService } from 'src/app/services/pdf.service';
 import dentalPieces from 'src/assets/i18n/dental-pieces.json';
+import { ImageViewerDialogComponent } from '../shared/image-viewer-dialog/image-viewer-dialog.component';
 
 // Interfaz para los datos de la tabla de fichas clínicas adaptada al modelo del backend
 export interface FichaClinicaData {
@@ -91,6 +92,10 @@ const FICHAS_EJEMPLO: FichaClinicaData[] = [];
   ],
 })
 export class FichaClinicaComponent implements OnInit {
+  // Propiedades para manejar las imágenes de radiografía
+  radiographyFiles: File[] = [];
+  radiographyPreviews: string[] = [];
+  radiographyBase64: string[] = [];
   fichaClinicaForm: FormGroup;
   treatmentForm: FormGroup;
   maxDate: Date = new Date();
@@ -636,6 +641,7 @@ export class FichaClinicaComponent implements OnInit {
       precio: 0,
       abono: 0
     });
+    this.treatmentForm.reset();
     this.isEditMode = false;
     this.currentFichaId = null;
     this.formTitle = 'Registro de Ficha Clínica';
@@ -795,6 +801,15 @@ export class FichaClinicaComponent implements OnInit {
   editTreatment(index: number) {
     const treatment = (this.treatments.at(index) as FormGroup).value;
     this.initTreatmentForm(treatment);
+    
+    // Cargar las imágenes de radiografía si existen
+    if (treatment.radiography && Array.isArray(treatment.radiography) && treatment.radiography.length > 0) {
+      this.loadImagesFromBase64Array(treatment.radiography);
+    } else {
+      // Limpiar las imágenes anteriores
+      this.clearRadiographyFiles();
+    }
+    
     this.showTreatmentForm = true;
     this.currentTreatmentIndex = index;
   }
@@ -1201,31 +1216,87 @@ export class FichaClinicaComponent implements OnInit {
   calculateTotalDeposit(): number {
     return this.treatments.controls.reduce((sum, control) => sum + (control.get('deposit')?.value || 0), 0);
   }
-
+  
   // Método para obtener un resumen de los tratamientos
   getTreatmentsSummary(treatments: DentalTreatment[]): string {
     if (!treatments || treatments.length === 0) return 'Sin tratamientos';
-    
+
     if (treatments.length === 1) {
       return treatments[0].treatment;
     }
     
-    const firstTwo = treatments.slice(0, 2).map(t => t.treatment).join(', ');
-    return treatments.length > 2 ? `${firstTwo} y ${treatments.length - 2} más` : firstTwo;
+    return `${treatments.length} tratamientos`;
   }
-
+  
   // Método para calcular el porcentaje de completitud de los tratamientos
   getCompletionPercentage(treatments: DentalTreatment[]): number {
     if (!treatments || treatments.length === 0) return 0;
-    
-    const completedCount = treatments.filter(t => t.status === 'Completado').length;
+    const completedCount = this.getCompletedCount(treatments);
     return Math.round((completedCount / treatments.length) * 100);
   }
-
+  
   // Método para obtener la cantidad de tratamientos completados
   getCompletedCount(treatments: DentalTreatment[]): number {
     if (!treatments) return 0;
     return treatments.filter(t => t.status === 'Completado').length;
+  }
+  
+  // Método para verificar si algún tratamiento tiene observaciones
+  hasAnyObservations(treatments: DentalTreatment[]): boolean {
+    if (!treatments || treatments.length === 0) {
+      return false;
+    }
+    return treatments.some(t => t.observations && t.observations.trim().length > 0);
+  }
+  
+  // Verificar si hay radiografías en alguno de los tratamientos
+  hasAnyRadiographs(treatments: DentalTreatment[]): boolean {
+    if (!treatments || treatments.length === 0) {
+      return false;
+    }
+    return treatments.some(t => t.radiography && Array.isArray(t.radiography) && t.radiography.length > 0);
+  }
+  
+  // Abrir visor de imágenes para ver la radiografía en tamaño completo
+  openImageViewer(imageUrl: string): void {
+    // Crear un elemento de diálogo modal para mostrar la imagen
+    const dialogRef = this.dialog.open(ImageViewerDialogComponent, {
+      width: '80%',
+      maxWidth: '1000px',
+      data: { imageUrl }
+    });
+  }
+  
+  // Método para descargar una imagen en base64
+  downloadImage(base64Data: string, fileName: string): void {
+    try {
+      // Crear un enlace temporal para la descarga
+      const linkElement = document.createElement('a');
+      
+      // Preparar la URL de datos con el base64
+      const dataUrl = `data:image/jpeg;base64,${base64Data}`;
+      
+      // Configurar el enlace
+      linkElement.href = dataUrl;
+      linkElement.download = fileName;
+      
+      // Agregar el enlace al documento, hacer clic y luego eliminarlo
+      document.body.appendChild(linkElement);
+      linkElement.click();
+      document.body.removeChild(linkElement);
+      
+      // Mostrar notificación de éxito
+      this.snackBar.open(`Imagen ${fileName} descargada correctamente`, 'Cerrar', {
+        duration: 3000,
+        panelClass: ['success-snackbar']
+      });
+    } catch (error) {
+      console.error('Error al descargar la imagen:', error);
+      this.snackBar.open('Error al descargar la imagen', 'Cerrar', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+    }
   }
 
   // Método para calcular el porcentaje pagado
@@ -1233,11 +1304,131 @@ export class FichaClinicaComponent implements OnInit {
     if (!price || price === 0 || !deposit) return 0;
     return Math.round((deposit / price) * 100);
   }
+  
+  // Métodos para manejar las imágenes de radiografía
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
 
-  // Método para verificar si algún tratamiento tiene observaciones
-  hasAnyObservations(treatments: DentalTreatment[]): boolean {
-    if (!treatments) return false;
-    return treatments.some(t => t.observations && t.observations.trim().length > 0);
+    const files = Array.from(input.files);
+    files.forEach(file => {
+      if (!file.type.includes('image/')) {
+        this.snackBar.open('Solo se permiten archivos de imagen', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+        return;
+      }
+
+      this.radiographyFiles.push(file);
+      
+      // Crear vista previa
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.radiographyPreviews.push(e.target.result);
+        
+        // Guardar como base64 para enviar al servidor
+        const base64 = e.target.result.split(',')[1];
+        this.radiographyBase64.push(base64);
+        
+        // Actualizar el campo de radiografía en el formulario
+        this.updateRadiographyField();
+        
+        this.cdr.detectChanges();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  removeFile(index: number) {
+    // Guardar el nombre del archivo que estamos eliminando para informar al usuario
+    const fileName = this.radiographyFiles[index]?.name || 'la imagen';
+    
+    // Eliminar la imagen de los arrays
+    this.radiographyFiles.splice(index, 1);
+    this.radiographyPreviews.splice(index, 1);
+    this.radiographyBase64.splice(index, 1);
+    
+    // Actualizar el campo de radiografía en el formulario
+    this.updateRadiographyField();
+    
+    // Notificar al usuario que la imagen se ha eliminado
+    this.snackBar.open(`${fileName} ha sido eliminada`, 'Cerrar', {
+      duration: 3000,
+      panelClass: ['info-snackbar']
+    });
+    
+    // Resetear el input de archivo para permitir seleccionar la misma imagen nuevamente
+    const fileInput = document.getElementById('radiographyFiles') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    
+    this.cdr.detectChanges();
+  }
+
+  clearRadiographyFiles() {
+    this.radiographyFiles = [];
+    this.radiographyPreviews = [];
+    this.radiographyBase64 = [];
+    
+    // Actualizar el campo de radiografía en el formulario
+    this.updateRadiographyField();
+  }
+
+
+  updateRadiographyField() {
+    // Si estamos usando un campo oculto para almacenar las imágenes, actualizarlo
+    if (this.treatmentForm.get('radiography')) {
+      // Guardar el array de imágenes en base64
+      this.treatmentForm.get('radiography')!.setValue(this.radiographyBase64);
+    }
+  }
+  
+  // Método para cargar imágenes desde un array de base64
+  loadImagesFromBase64Array(base64Array: string[]) {
+    if (!base64Array || !Array.isArray(base64Array) || base64Array.length === 0) {
+      return;
+    }
+    
+    // Limpiar las imágenes actuales
+    this.clearRadiographyFiles();
+    
+    // Cargar cada imagen del array
+    base64Array.forEach((base64String, index) => {
+      // Crear la URL de la imagen para la vista previa
+      const imageUrl = `data:image/jpeg;base64,${base64String}`;
+      this.radiographyPreviews.push(imageUrl);
+      
+      // Guardar el base64 en el array
+      this.radiographyBase64.push(base64String);
+      
+      // Crear un objeto File para cada imagen (opcional, solo si necesitas el objeto File)
+      try {
+        // Convertir base64 a blob
+        const byteString = atob(base64String);
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        
+        for (let i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        
+        const blob = new Blob([ab], { type: 'image/jpeg' });
+        const file = new File([blob], `imagen-${index + 1}.jpg`, { type: 'image/jpeg' });
+        this.radiographyFiles.push(file);
+      } catch (error) {
+        console.error('Error al convertir base64 a File:', error);
+      }
+    });
+    
+    // Actualizar la interfaz
+    this.cdr.detectChanges();
+  }
+
+  ngOnDestroy() {
+    // Limpiar recursos si es necesario
+    this.clearRadiographyFiles();
   }
 
   // Método para aplicar filtros a la tabla

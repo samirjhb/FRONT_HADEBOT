@@ -23,6 +23,11 @@ export const navItems: NavItem[] = [
     iconName: 'file-text',
     route: '/herramientas-de-trabajo/fichaClinica',
   },
+  {
+    displayName: 'Chat',
+    iconName: 'robot',
+    route: '/herramientas-de-trabajo/chat',
+  },
   // {
   //   displayName: 'Chips',
   //   iconName: 'info-circle',
